@@ -166,7 +166,7 @@ class GetNewRequirementLineTest(unittest.TestCase):
             (
                 f"requests @ {url} ; sys_platform == 'linux'",
                 "extra == 'dev'",
-                f'Requires-Dist: requests @ {url} ; (sys_platform == "linux") and extra == \'dev\'',
+                f"Requires-Dist: requests @ {url} ; (sys_platform == \"linux\") and extra == 'dev'",
             ),
             (
                 f"requests @ {url}",
