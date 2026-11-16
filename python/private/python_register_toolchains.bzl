@@ -227,6 +227,14 @@ def python_register_toolchains(
         python_version = python_version,
         user_repository_name = name,
         platforms = loaded_platforms,
+        platform_compatible_with = {
+            platform: platforms[platform].compatible_with
+            for platform in loaded_platforms
+        },
+        platform_target_settings = {
+            platform: platforms[platform].target_settings
+            for platform in loaded_platforms
+        },
     )
 
     # in bzlmod we write out our own toolchain repos and host repos
