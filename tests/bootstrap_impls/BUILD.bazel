@@ -273,3 +273,39 @@ py_test(
 )
 
 relative_path_test_suite(name = "relative_path_tests")
+
+py_reconfig_binary(
+    name = "ambient_pythonpath_script_bin",
+    srcs = ["ambient_pythonpath_bin.py"],
+    bootstrap_impl = "script",
+    main = "ambient_pythonpath_bin.py",
+    target_compatible_with = SUPPORTS_BOOTSTRAP_SCRIPT,
+    deps = ["//python/runfiles"],
+)
+
+py_reconfig_binary(
+    name = "ambient_pythonpath_system_bin",
+    srcs = ["ambient_pythonpath_bin.py"],
+    bootstrap_impl = "system_python",
+    main = "ambient_pythonpath_bin.py",
+    deps = ["//python/runfiles"],
+)
+
+py_test(
+    name = "ambient_pythonpath_script_test",
+    srcs = ["ambient_pythonpath_test.py"],
+    data = [":ambient_pythonpath_script_bin"],
+    env = {"TEST_BINARY_RLOCATION": "$(rlocationpath :ambient_pythonpath_script_bin)"},
+    main = "ambient_pythonpath_test.py",
+    target_compatible_with = SUPPORTS_BOOTSTRAP_SCRIPT,
+    deps = ["//python/runfiles"],
+)
+
+py_test(
+    name = "ambient_pythonpath_system_test",
+    srcs = ["ambient_pythonpath_test.py"],
+    data = [":ambient_pythonpath_system_bin"],
+    env = {"TEST_BINARY_RLOCATION": "$(rlocationpath :ambient_pythonpath_system_bin)"},
+    main = "ambient_pythonpath_test.py",
+    deps = ["//python/runfiles"],
+)

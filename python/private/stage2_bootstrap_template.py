@@ -2,6 +2,7 @@
 # interpreter, with some of the basic interpreter options/envvars set.
 # However, more setup is required to make the app's real main file runnable.
 
+import os
 import sys
 
 # By default the Python interpreter prepends the directory containing this
@@ -21,8 +22,25 @@ if (
 ):
     del sys.path[0]
 
+# Python initializes PYTHONPATH before the runfiles-specific import paths. Keep
+# the ambient entries available for undeclared imports, but do not let them
+# shadow the binary's declared dependencies or its interpreter's stdlib.
+ambient_pythonpath = os.environ.get("PYTHONPATH")
+if ambient_pythonpath:
+    ambient_paths = {
+        os.path.normcase(os.path.abspath(path or os.curdir))
+        for path in ambient_pythonpath.split(os.pathsep)
+    }
+    declared_paths = []
+    inherited_paths = []
+    for path in sys.path:
+        if os.path.normcase(os.path.abspath(path)) in ambient_paths:
+            inherited_paths.append(path)
+        else:
+            declared_paths.append(path)
+    sys.path[:] = declared_paths + inherited_paths
+
 import contextlib
-import os
 import re
 import runpy
 import types
@@ -520,6 +538,30 @@ def main():
             f"sys.path missing expected site-packages: adding {site_packages}"
         )
         _add_site_packages(site_packages)
+
+    # A namespace package declared by the binary must also beat a regular
+    # package on the ambient PYTHONPATH (sys.path ordering alone cannot do
+    # that under PEP 420). Allow unrelated ambient modules as a fallback.
+    if ambient_pythonpath:
+        from importlib.machinery import PathFinder
+
+        first_party_paths = [
+            p for p in sys.path
+            if os.path.normcase(os.path.abspath(p)) not in ambient_paths
+        ]
+
+        class _DeclaredFirstFinder:
+            @staticmethod
+            def find_spec(fullname, path=None, target=None):
+                if path is not None:
+                    return None
+                spec = PathFinder.find_spec(fullname, first_party_paths)
+                if spec is not None and spec.loader is None:
+                    # Prevent NamespacePath from re-scanning the ambient paths.
+                    spec.submodule_search_locations = list(spec.submodule_search_locations)
+                return spec
+
+        sys.meta_path.insert(sys.meta_path.index(PathFinder), _DeclaredFirstFinder)
 
     print_verbose("runfiles root:", runfiles_root)
 
