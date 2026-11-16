@@ -383,6 +383,10 @@ dev_python.toolchain(
     python_version = "3.12.16",
 )
 
+# Exercise aliases for the version with a custom runtime platform below.
+dev_python.toolchain(python_version = "3.14.4")
+use_repo(dev_python, "python_3_14_4")
+
 # For testing an arbitrary runtime triggered by a custom flag.
 # See //tests/toolchains:custom_platform_toolchain_test
 dev_python.single_version_platform_override(
