@@ -399,13 +399,14 @@ def get_new_requirement_line(reqs_text: str, extra: str) -> str:
 
     base = f"Requires-Dist: {req.name}{req_extra_deps}{req_spec}"
 
+    marker_separator = " ; " if req.url else "; "
     if req.marker:
         if extra:
-            return f"{base}; ({req.marker}) and {extra}"
+            return f"{base}{marker_separator}({req.marker}) and {extra}"
         else:
-            return f"{base}; {req.marker}"
+            return f"{base}{marker_separator}{req.marker}"
     elif extra:
-        return f"{base}; {extra}"
+        return f"{base}{marker_separator}{extra}"
     else:
         return base
 

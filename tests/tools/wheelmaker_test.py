@@ -153,6 +153,35 @@ class GetNewRequirementLineTest(unittest.TestCase):
             "Requires-Dist: requests @ git+https://github.com/psf/requests.git@3aa6386c3",
         )
 
+    def test_direct_url_markers_require_whitespace_separator(self):
+        from packaging.requirements import Requirement
+
+        url = "https://example.com/requests.whl"
+        cases = [
+            (
+                f"requests @ {url} ; sys_platform == 'linux'",
+                "",
+                f'Requires-Dist: requests @ {url} ; sys_platform == "linux"',
+            ),
+            (
+                f"requests @ {url} ; sys_platform == 'linux'",
+                "extra == 'dev'",
+                f'Requires-Dist: requests @ {url} ; (sys_platform == "linux") and extra == \'dev\'',
+            ),
+            (
+                f"requests @ {url}",
+                "extra == 'dev'",
+                f"Requires-Dist: requests @ {url} ; extra == 'dev'",
+            ),
+        ]
+        for requirement, extra, expected in cases:
+            with self.subTest(requirement=requirement, extra=extra):
+                output = wheelmaker.get_new_requirement_line(requirement, extra)
+                self.assertEqual(output, expected)
+                parsed = Requirement(output.removeprefix("Requires-Dist: "))
+                self.assertEqual(parsed.url, url)
+                self.assertIsNotNone(parsed.marker)
+
     def test_requirement_with_marker(self):
         result = wheelmaker.get_new_requirement_line(
             "requests>=2.0; python_version>='3.6'", ""
