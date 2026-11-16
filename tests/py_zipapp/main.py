@@ -8,15 +8,16 @@ import sys
 
 def wait_for_signal(handle_signal):
     if handle_signal:
-
-        def handle(signum, _frame):
-            print(f"received:{signum}", flush=True)
-
-        signal.signal(signal.SIGTERM, handle)
+        # Block SIGTERM before declaring readiness so early delivery is not lost.
+        signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGTERM])
 
     print(f"file:{__file__}", flush=True)
     print(f"ready:{os.getpid()}", flush=True)
-    signal.pause()
+    if handle_signal:
+        received = signal.sigwait([signal.SIGTERM])
+        print(f"received:{received}", flush=True)
+    else:
+        signal.pause()
     return 0
 
 
