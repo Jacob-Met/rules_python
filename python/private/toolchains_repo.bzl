@@ -68,9 +68,13 @@ exports_files(["defs.bzl"])
 PLATFORMS = [
 {loaded_platforms}
 ]
+PLATFORM_COMPATIBLE_WITH = {platform_compatible_with}
+PLATFORM_TARGET_SETTINGS = {platform_target_settings}
 toolchain_aliases(
     name = "{py_repository}",
     platforms = PLATFORMS,
+    platform_compatible_with = PLATFORM_COMPATIBLE_WITH,
+    platform_target_settings = PLATFORM_TARGET_SETTINGS,
 )
 """.lstrip()
 
@@ -302,6 +306,8 @@ def _toolchain_aliases_impl(rctx):
     build_contents = _TOOLCHAIN_ALIASES_BUILD_TEMPLATE.format(
         py_repository = rctx.attr.user_repository_name,
         loaded_platforms = "\n".join(["    \"{}\",".format(p) for p in rctx.attr.platforms]),
+        platform_compatible_with = render.string_list_dict(rctx.attr.platform_compatible_with),
+        platform_target_settings = render.string_list_dict(rctx.attr.platform_target_settings),
     )
     rctx.file("BUILD.bazel", build_contents)
 
@@ -324,6 +330,8 @@ actions.""",
         "platforms": attr.string_list(
             doc = "List of platforms for which aliases shall be created",
         ),
+        "platform_compatible_with": attr.string_list_dict(),
+        "platform_target_settings": attr.string_list_dict(),
         "python_version": attr.string(doc = "The Python version."),
         "user_repository_name": attr.string(
             mandatory = True,
